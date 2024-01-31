@@ -2,11 +2,11 @@
 
 ;Problem 1
 (define list-ref
-  (λ (lst dex)
-    (cond
-      ((empty? lst)
-       (if (> 0 dex)
-           ;then
-           'bad-data
-           ;else
+  (lambda (ls n)
+    (letrec
+      ([nth-cdr (lambda (n)
+                  ;; complete the definition
+                  )])
+      (car (nth-cdr n)))))
+           
            
