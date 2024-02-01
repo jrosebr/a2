@@ -23,8 +23,8 @@
 ;Problem 3
 (define stretch
   (λ (pred x)
-   (λ (value)
-     (or (eqv? value x) (pred value)))))
+    (λ (value)
+      (or (eqv? value x) (pred value)))))
 
 ;Problem 4
 (define walk-symbol
@@ -43,11 +43,41 @@
 (define lambda-exp?
   (λ (E)
     (letrec
-      ([p
-        (λ (e)
-          (match e
-            [`,y #t]
-            [`(lambda (,x) ,body) (p body)]
-            [`(,rator ,rand . ,more) (or (p rator) (p rand))]
-            [else #f]))])
+        ([p
+          (λ (e)
+            (match e
+              [`,y #:when (symbol? y) #t]
+              [`(lambda (,x) ,body) #:when (symbol? x) (p body)]
+              [`(,rator ,rand) (and (p rator) (p rand))]
+              [else #f]))])
       (p E))))
+
+;Problem 6
+(define var-occurs?
+  (λ (x exp)
+    (match exp
+      [`,y #:when (symbol? y) (eqv? x y)]
+      [`(lambda (,x) ,body) #:when (symbol? x) (var-occurs? x body)]
+      [`(,rator ,rand) (or (var-occurs? x rator) (var-occurs? x rand))]
+      [else #f])))
+
+;;(require racket/trace)
+;;& (trace function name)
+;Problem 7
+
+(define append
+  (λ (ls1 ls2)
+    (if (null? ls1)
+        ;then
+        ls2
+        ;else
+        (cons (car ls1) (append (cdr ls1) ls2)))))
+
+(require racket/trace)
+(define vars
+  (λ (exp)
+    (match exp
+      [`,y #:when (symbol? y) (list y)]
+      [`(lambda (,x) ,body) #:when (symbol? x) (vars body)]
+      [`(,rator ,rand) (append (vars rator) (vars rand))])))
+(trace vars)
