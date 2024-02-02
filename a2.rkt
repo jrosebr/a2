@@ -17,7 +17,7 @@
     (cond
       ((empty? ls1) ls2)
       ((empty? ls2) ls1)
-      ((memv (car ls1) ls2)  (union ls1 (cdr ls2)))
+      ((memv (car ls1) ls2)  (union (cdr ls1) ls2))
       (else (cons (car ls1) (union (cdr ls1) ls2))))))
 
 ;Problem 3
@@ -113,28 +113,61 @@
 ;Problem 11
 (define unique-free-vars
   (λ (exp)
-    (define (collect-free-vars exp bound-vars)
       (match exp
-        [`,x #:when (symbol? x)
-              (if (and (symbol? x) (not (member x bound-vars)))
-                  ;then
-                  (list x)
-                  ;else
-                  '())]
+        [`,x #:when (symbol? x) (list x)]
         [`(lambda (,y) ,body) #:when (symbol? y)
-              (collect-free-vars body (cons y bound-vars))]
+                              (remove y (unique-free-vars body))]
         [`(,rator ,rand)
-              (remove-duplicates (append (collect-free-vars rator bound-vars)
-                                          (collect-free-vars rand bound-vars)))]
-        [`else '()]))
-    
-    (remove '() (collect-free-vars exp '()))))
+              (union (unique-free-vars rator) (unique-free-vars rand))])))
 
 ;Problem 12
 (require racket/trace)
 (define unique-bound-vars
   (λ (exp)
-    (match exp
-      [`,y 
-  (trace unique-bound-vars)
-    
+      (match exp
+        [`,x #:when (symbol? x) '()]
+        [`(lambda (,y) ,body) #:when (symbol? y)
+                              (if (var-occurs-free? y body)
+                                  (cons y (unique-bound-vars body))
+                                  (unique-bound-vars body))]
+        [`(,rator ,rand)
+              (union (unique-bound-vars rator) (unique-bound-vars rand))])))
+(trace unique-bound-vars)
+;(display (unique-bound-vars 'x))
+;(display (unique-bound-vars '(lambda (x) y)))
+;(display (unique-bound-vars '(lambda (x) (x y))))
+;(display (unique-bound-vars '((lambda (x) ((x y) e)) (lambda (c) (x (lambda (x) (x (e c))))))))
+;(display (unique-bound-vars '(lambda (y) y)))
+;(display (unique-bound-vars '(lambda (x) (y z))))
+;(display ((unique-bound-vars '(lambda (x) (lambda (x) x)))))
+
+;Problem 13
+(define index
+  (λ (var ls)
+    (match ls
+      (`() (error "not found"))
+      (`(,a . ,_) #:when (eqv? var a) 0)
+      (`(,_ . ,d) (add1 (index var d))))))
+
+(define lex
+  (λ (e ls)
+    (match e
+      (`,y #:when (symbol? y) (index y ls))
+      (`(λ (,x) ,body)
+       #:when (symbol? x)
+       `(λ ,(lex body (cons x ls))))
+      (`(,rator ,rand)
+       `(,(lex rator ls) ,(lex rand ls))))))
+
+(define e1=e2?
+  (λ (e1 e2)
+    (match `(,e1 ,e2)
+      (`(,y1 ,y2)
+       #:when (and (symbol? y1) (symbol? y2))
+       (eqv? y1 y2))
+      (`((λ (,x1) ,b1) (λ (,x2) ,b2))
+       #:when (and (symbol? x1) (symbol? x2))
+            (eqv? (lex `(λ (,x1) ,b1) '()) (lex `(λ (,x2) ,b2) '())));VERY IMPORTANT
+      (`((,rator1 ,rand1) (,rator2 ,rand2))
+       (and (e1=e2? rator1 rator2)
+            (e1=e2? rand1 rand2))))))
