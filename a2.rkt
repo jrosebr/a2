@@ -73,11 +73,68 @@
         ;else
         (cons (car ls1) (append (cdr ls1) ls2)))))
 
-(require racket/trace)
 (define vars
   (λ (exp)
     (match exp
       [`,y #:when (symbol? y) (list y)]
       [`(lambda (,x) ,body) #:when (symbol? x) (vars body)]
       [`(,rator ,rand) (append (vars rator) (vars rand))])))
-(trace vars)
+
+;Problem 8
+(define unique-vars
+  (λ (exp)
+    (match exp
+      [`,y #:when (symbol? y) (list y)]
+      [`(lambda (,x) ,body) #:when (symbol? x) (union '() (unique-vars body))]
+      [`(,rator ,rand) (if (eqv? rator rand)
+                           ;then
+                           (unique-vars rator)
+                           ;else
+                           (union (unique-vars rator) (unique-vars rand)))]
+      [`else '()])))
+
+;Problem 9
+(define var-occurs-free?
+  (λ (x exp)
+    (match exp
+      [`,y #:when (symbol? y) (eqv? x y)]
+      [`(lambda (,y) ,body) #:when (symbol? y) (and (var-occurs-free? x body) (not (eqv? x y)))]
+      [`(,rator ,rand) (or (var-occurs-free? x rator) (var-occurs-free? x rand))]
+      [`else #f])))
+
+;Problem 10
+(define var-occurs-bound?
+  (λ (x exp)
+    (match exp
+      [`,y #:when (symbol? y) #f]
+      [`(lambda (,y) ,body) #:when (symbol? y) (or (var-occurs-bound? x body) (and (var-occurs-free? x body) (eqv? x y)))]
+      [`(,rator ,rand) (or (var-occurs-bound? x rator) (var-occurs-bound? x rand))])))
+
+;Problem 11
+(define unique-free-vars
+  (λ (exp)
+    (define (collect-free-vars exp bound-vars)
+      (match exp
+        [`,x #:when (symbol? x)
+              (if (and (symbol? x) (not (member x bound-vars)))
+                  ;then
+                  (list x)
+                  ;else
+                  '())]
+        [`(lambda (,y) ,body) #:when (symbol? y)
+              (collect-free-vars body (cons y bound-vars))]
+        [`(,rator ,rand)
+              (remove-duplicates (append (collect-free-vars rator bound-vars)
+                                          (collect-free-vars rand bound-vars)))]
+        [`else '()]))
+    
+    (remove '() (collect-free-vars exp '()))))
+
+;Problem 12
+(require racket/trace)
+(define unique-bound-vars
+  (λ (exp)
+    (match exp
+      [`,y 
+  (trace unique-bound-vars)
+    
