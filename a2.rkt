@@ -164,10 +164,10 @@
     (match `(,e1 ,e2)
       (`(,y1 ,y2)
        #:when (and (symbol? y1) (symbol? y2))
-       (eqv? y1 y2))
+       (equal? y1 y2))
       (`((λ (,x1) ,b1) (λ (,x2) ,b2))
        #:when (and (symbol? x1) (symbol? x2))
-            (eqv? (lex `(λ (,x1) ,b1) '()) (lex `(λ (,x2) ,b2) '())));VERY IMPORTANT
+            (equal? (lex `(λ (,x1) ,b1) '()) (lex `(λ (,x2) ,b2) '())));VERY IMPORTANT
       (`((,rator1 ,rand1) (,rator2 ,rand2))
        (and (e1=e2? rator1 rator2)
             (e1=e2? rand1 rand2))))))
