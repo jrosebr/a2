@@ -56,8 +56,8 @@
 (define var-occurs?
   (λ (x exp)
     (match exp
-      [`,y #:when (symbol? y) (eqv? x y)]
-      [`(lambda (,x) ,body) #:when (symbol? x) (var-occurs? x body)]
+      [`,y #:when (symbol? y) (equal? x y)]
+      [`(lambda (,y) ,body) #:when (symbol? y) (var-occurs? x body)]
       [`(,rator ,rand) (or (var-occurs? x rator) (var-occurs? x rand))]
       [else #f])))
 
